@@ -16,14 +16,12 @@
     </style>
 </head>
 <body>
-    <div id="text-area"></div>
-    
-    <script>
-        const textArea = document.getElementById('text-area');
-        
-        textArea.addEventListener('input', () => {
-            document.body.innerHTML = textArea.value;
-        });
-    </script>
+  <div id="text-area"></div>
+  <script>
+    const textArea = document.getElementById('text-area');
+    const textSize = document.getElementById('text');
+
+    textArea.textContent = textSize.textContent;
+  </script>
 </body>
 </html>
