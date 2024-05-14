@@ -1,38 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Text Website</title>
-    <style>
-        #text-area {
-            width: 800px;
-            height: 500px;
-            padding: 20px;
-            font-size: 16px;
-            font-family: Arial, sans-serif;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-            margin: 50px auto;
-        }
-        
-        #copy-button {
-            background-color: #4CAF50;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: block;
-            margin: 20px auto;
-        }
-        
-        #copy-button:hover {
-            background-color: #3e8e41;
-        }
-    </style>
+  <title>Text Website</title>
 </head>
 <body>
-  <div id="text-area"></div>
+  <textarea id="text-area" readonly="true" contenteditable="false"></textarea>
   <button id="copy-button">Copy Text</button>
   <script>
     const textArea = document.getElementById('text-area');
@@ -41,25 +13,11 @@
     fetch('script.txt')
       .then(response => response.text())
       .then(text => {
-        const lines = text.split('\n');
-        let htmlText = '';
-        lines.forEach((line) => {
-          htmlText += `<p>${line}</p>`;
-        });
-        textArea.innerHTML = htmlText;
+        textArea.value = text;
       });
 
-    document.addEventListener('keydown', (event) => {
-      if (event.ctrlKey && event.key === 'A') {
-        const textArea = document.getElementById('text-area');
-        textArea.focus();
-      }
-    });
-    
-    document.body.style.pointerEvents = 'none';
-
     copyButton.addEventListener('click', () => {
-      const text = textArea.textContent;
+      const text = textArea.value;
       navigator.clipboard.writeText(text);
       alert('Text copied to clipboard!');
     });
