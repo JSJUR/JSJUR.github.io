@@ -21,9 +21,12 @@
   <script>
     const textArea = document.getElementById('text-area');
     const copyButton = document.getElementById('copy-button');
-    const textSize = document.getElementById('text');
 
-    textArea.textContent = textSize.textContent;
+    fetch('script.txt')
+      .then(response => response.text())
+      .then(text => {
+        textArea.textContent = text;
+      });
 
     copyButton.addEventListener('click', () => {
       const text = textArea.textContent;
