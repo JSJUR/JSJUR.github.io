@@ -25,7 +25,12 @@
     fetch('script.txt')
       .then(response => response.text())
       .then(text => {
-        textArea.textContent = text;
+        const lines = text.split('\n');
+        let htmlText = '';
+        lines.forEach((line) => {
+          htmlText += `<p>${line}</p>`;
+        });
+        textArea.innerHTML = htmlText;
       });
 
     copyButton.addEventListener('click', () => {
