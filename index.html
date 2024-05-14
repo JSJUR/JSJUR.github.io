@@ -17,11 +17,19 @@
 </head>
 <body>
   <div id="text-area"></div>
+  <button id="copy-button">Copy Text</button>
   <script>
     const textArea = document.getElementById('text-area');
+    const copyButton = document.getElementById('copy-button');
     const textSize = document.getElementById('text');
 
     textArea.textContent = textSize.textContent;
+
+    copyButton.addEventListener('click', () => {
+      const text = textArea.textContent;
+      navigator.clipboard.writeText(text);
+      alert('Text copied to clipboard!');
+    });
   </script>
 </body>
 </html>
