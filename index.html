@@ -49,6 +49,12 @@
         textArea.innerHTML = htmlText;
       });
 
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.key === 'A') {
+        textArea.select();
+      }
+    });
+
     copyButton.addEventListener('click', () => {
       const text = textArea.textContent;
       navigator.clipboard.writeText(text);
