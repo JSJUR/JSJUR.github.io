@@ -51,9 +51,12 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.key === 'A') {
-        textArea.select();
+        const textArea = document.getElementById('text-area');
+        textArea.focus();
       }
     });
+    
+    document.body.style.pointerEvents = 'none';
 
     copyButton.addEventListener('click', () => {
       const text = textArea.textContent;
