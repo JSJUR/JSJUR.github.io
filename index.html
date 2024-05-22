@@ -31,6 +31,14 @@
             outline: none;
             color: rgb(120, 120, 120);
         }
+        #text-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #text-area::-webkit-scrollbar-thumb {
+            background-color: rgb(70, 70, 70);
+            border-radius: 10px;
+        }
         #copy-button {
             background-color: rgb(76, 175, 80);
             color: #fff;
@@ -64,7 +72,7 @@
                     textArea.value = text;
                 })
                 .catch(error => {
-                    textArea.value = 'Failed to get script';
+                    textArea.value = 'Failed to get script ';
                     console.error('Error fetching script:', error);
                 });
 
