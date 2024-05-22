@@ -1,51 +1,68 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Text Website</title>
-  <style>
-    #text-area {
-      border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 16px;
-      font-family: monospace;
-      width: 600px;
-      height: 400px;
-      resize: vertical;
-    }
-    #copy-button {
-        background-color: #4CAF50;
-        color: #fff;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        display: block;
-        margin: 20px auto;
-    }
+    <head>
+    <title>&gt; Script &lt;</title>
+    <link rel="icon" type="image/png" href="epicface.png">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            margin: 0;
+            background-color: rgb(50, 50, 50);
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        #text-area {
+            border: 3px solid rgb(35, 35, 35);
+            padding: 10px;
+            font-size: 16px;
+            font-family: monospace;
+            border-radius: 10px;
+            width: 600px;
+            height: 400px;
+            resize: vertical;
+            background-color: rgb(45, 45, 45);
+            outline: none;
+        }
+        #copy-button {
+            background-color: rgb(76, 175, 80);
+            color: #fff;
+            padding: 10px 20px;
+            border: 2px solid rgb(54, 129, 57);
+            width: 200px;
+            height: 35px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+    </head>
+    <body>
+        <div id="container">
+            <textarea id="text-area" readonly="true" contenteditable="false"></textarea>
+            <button id="copy-button">Copy Text</button>
+        </div>
+        <script>
+            const textArea = document.getElementById('text-area');
+            const copyButton = document.getElementById('copy-button');
 
-    #copy-button:hover {
-        background-color: #3e8e41;
-    }
-  </style>
-</head>
-<body>
-  <textarea id="text-area" readonly="true" contenteditable="false"></textarea>
-  <button id="copy-button">Copy Text</button>
-  <script>
-    const textArea = document.getElementById('text-area');
-    const copyButton = document.getElementById('copy-button');
+            fetch('script.txt')
+                .then(response => response.text())
+                .then(text => {
+                    textArea.value = text;
+            });
 
-    fetch('script.txt')
-      .then(response => response.text())
-      .then(text => {
-        textArea.value = text;
-      });
-
-    copyButton.addEventListener('click', () => {
-      const text = textArea.value;
-      navigator.clipboard.writeText(text);
-      alert('Text copied to clipboard!');
-    });
-  </script>
-</body>
+            copyButton.addEventListener('click', () => {
+                const text = textArea.value;
+                navigator.clipboard.writeText(text);
+                alert('Text copied to clipboard!');
+            });
+        </script>
+    </body>
 </html>
