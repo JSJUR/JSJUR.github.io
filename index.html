@@ -29,6 +29,7 @@
             resize: vertical;
             background-color: rgb(45, 45, 45);
             outline: none;
+            color: rgb(120, 120, 120);
         }
         #copy-button {
             background-color: rgb(76, 175, 80);
@@ -53,10 +54,20 @@
             const copyButton = document.getElementById('copy-button');
 
             fetch('script.txt')
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch script.txt');
+                    }
+                    return response.text();
+                })
                 .then(text => {
                     textArea.value = text;
-            });
+                })
+                .catch(error => {
+                    textArea.value = 'Failed to get script';
+                    console.error('Error fetching script:', error);
+                });
+
 
             copyButton.addEventListener('click', () => {
                 const text = textArea.value;
