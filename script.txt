@@ -8,12 +8,12 @@ local LocalPlayer = Players.LocalPlayer
 local Aimlock = false
 local AimlockKey = Enum.KeyCode.Q
 local Balls = {}
-local CurrentBallIndex = 1
 
 local function createBallForPlayer(player)
+	if player == LocalPlayer then
+		return
+	end
 	local function onCharacterAdded(character)
-		if player == LocalPlayer then return end
-
 		local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
 		local Humanoid = character:WaitForChild("Humanoid")
 
@@ -26,7 +26,7 @@ local function createBallForPlayer(player)
 		Ball.CanCollide = false
 		Ball.Name = player.Name .. "'s Ball"
 
-		table.insert(Balls, Ball)
+		Balls[player] = Ball
 
 		local Highlight = Instance.new("Highlight", Ball)
 		Highlight.FillTransparency = 1
@@ -70,6 +70,31 @@ local function createBallForPlayer(player)
 	if player.Character then
 		onCharacterAdded(player.Character)
 	end
+
+	player.CharacterRemoving:Connect(function()
+		if Balls[player] then
+			Balls[player]:Destroy()
+			Balls[player] = nil
+		end
+	end)
+end
+
+local function GetNearestTarget()
+	local closestBall
+	local shortestDistance = math.huge
+
+	for player, ball in pairs(Balls) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local pos = Camera:WorldToViewportPoint(ball.Position)
+			local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)).Magnitude
+			if distance < shortestDistance then
+				closestBall = ball
+				shortestDistance = distance
+			end
+		end
+	end
+
+	return closestBall
 end
 
 for _, player in pairs(Players:GetPlayers()) do
@@ -78,20 +103,29 @@ end
 
 Players.PlayerAdded:Connect(createBallForPlayer)
 
+Players.PlayerRemoving:Connect(function(player)
+	if Balls[player] then
+		Balls[player]:Destroy()
+		Balls[player] = nil
+	end
+end)
+
 UserInputService.InputBegan:Connect(function(Input, Typing)
 	if not Typing and Input.KeyCode == AimlockKey then
 		Aimlock = not Aimlock
 		if Aimlock then
-			CurrentBallIndex = (CurrentBallIndex % #Balls) + 1
+			local nearestBall = GetNearestTarget()
+			if nearestBall then
+				CurrentBall = nearestBall
+			else
+				Aimlock = false
+			end
 		end
 	end
 end)
 
 RunService.RenderStepped:Connect(function()
-	if Aimlock and #Balls > 0 then
-		local Ball = Balls[CurrentBallIndex]
-		if Ball then
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, Ball.Position)
-		end
+	if Aimlock and CurrentBall then
+		Camera.CFrame = CFrame.new(Camera.CFrame.Position, CurrentBall.Position)
 	end
 end)
