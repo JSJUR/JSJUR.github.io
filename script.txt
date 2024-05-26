@@ -1,5 +1,14 @@
 
 
+--            customization
+
+
+local DefaultBallDistance = 2
+
+local JumpBallDistance = 1
+
+local LockOnPartName = "Head"
+
 local AimlockKey = Enum.KeyCode.Q
 
 
@@ -7,6 +16,14 @@ local AimlockKey = Enum.KeyCode.Q
 
 
 
+--[[                  made by jsjur
+░█████╗░░█████╗░███╗░░░███╗██╗░░░░░░█████╗░░█████╗░██╗░░██╗
+██╔══██╗██╔══██╗████╗░████║██║░░░░░██╔══██╗██╔══██╗██║░██╔╝
+██║░░╚═╝███████║██╔████╔██║██║░░░░░██║░░██║██║░░╚═╝█████═╝░
+██║░░██╗██╔══██║██║╚██╔╝██║██║░░░░░██║░░██║██║░░██╗██╔═██╗░
+╚█████╔╝██║░░██║██║░╚═╝░██║███████╗╚█████╔╝╚█████╔╝██║░╚██╗
+░╚════╝░╚═╝░░╚═╝╚═╝░░░░░╚═╝╚══════╝░╚════╝░░╚════╝░╚═╝░░╚═╝
+]]
 
 
 
@@ -16,24 +33,36 @@ local AimlockKey = Enum.KeyCode.Q
 
 
 
+--                        begin of script
 
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
 local Camera = workspace.CurrentCamera
 
 local LocalPlayer = Players.LocalPlayer
 local Aimlock = false
 local Balls = {}
+local CurrentBall = nil
 
-local function createBallForPlayer(player)
-	if player == LocalPlayer then
-		return
-	end
+local Deleted = false
+
+
+local function getPlayerSpeed(humanoidRootPart)
+	local velocity = humanoidRootPart.Velocity
+	return velocity.Magnitude
+end
+
+local function CreateBall(player)
 	local function onCharacterAdded(character)
+		if Deleted then return end
+		--if player == LocalPlayer then return end
+		
 		local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+		local LockOnPart = character:WaitForChild(LockOnPartName)
 		local Humanoid = character:WaitForChild("Humanoid")
 
 		local Ball = Instance.new("Part", workspace)
@@ -43,15 +72,17 @@ local function createBallForPlayer(player)
 		Ball.BrickColor = BrickColor.new("Bright blue")
 		Ball.Anchored = true
 		Ball.CanCollide = false
-		Ball.Name = player.Name .. "'s Ball"
+		Ball.Name = player.Name
 
-		Balls[player] = Ball
+		table.insert(Balls, Ball)
 
 		local Highlight = Instance.new("Highlight", Ball)
-		Highlight.FillTransparency = 1
-		Highlight.OutlineTransparency = 0.5
+		Highlight.FillTransparency = 0
+		Highlight.FillColor = Color3.fromRGB(170, 170, 255)
+		Highlight.OutlineTransparency = 0
 
 		local Jumping = false
+		local RunServiceConnection
 
 		Humanoid.StateChanged:Connect(function(_, NewState)
 			if NewState == Enum.HumanoidStateType.Jumping or NewState == Enum.HumanoidStateType.Freefall then
@@ -62,19 +93,19 @@ local function createBallForPlayer(player)
 		end)
 
 		local function UpdateBallPosition()
-			local MoveDirection = Humanoid.MoveDirection
-			local CameraDirection = Camera.CFrame.LookVector
-			local CombinedDirection = MoveDirection * Vector3.new(1, 0, 1) + Vector3.new(0, MoveDirection.Y, 0)
+			if not HumanoidRootPart then return end
+
+			local Velocity = HumanoidRootPart.Velocity
+			local SpeedMultiplier = Velocity.Magnitude / 16
 
 			local NewPosition
 
 			if Jumping then
-				NewPosition = HumanoidRootPart.Position + Vector3.new(0, 2, 0) + CombinedDirection * 2
-			elseif CombinedDirection.Magnitude > 0 then
-				CombinedDirection = CombinedDirection.Unit
-				NewPosition = HumanoidRootPart.Position + CombinedDirection * 2
+				NewPosition = LockOnPart.Position + Vector3.new(0, 1.5, 0) + Velocity.Unit * JumpBallDistance
+			elseif Velocity.Magnitude > 0 then
+				NewPosition = LockOnPart.Position + Velocity.Unit * SpeedMultiplier * DefaultBallDistance
 			else
-				NewPosition = HumanoidRootPart.Position
+				NewPosition = LockOnPart.Position
 			end
 
 			if NewPosition then
@@ -82,7 +113,20 @@ local function createBallForPlayer(player)
 			end
 		end
 
-		RunService.RenderStepped:Connect(UpdateBallPosition)
+		RunServiceConnection = RunService.RenderStepped:Connect(UpdateBallPosition)
+
+		character.AncestryChanged:Connect(function(_, parent)
+			if not parent then
+				if RunServiceConnection then RunServiceConnection:Disconnect() end
+				for _, Ball in ipairs(Balls) do
+					if Ball.Name == player.Name then
+						table.remove(table.find(Balls, Ball))
+						Ball:Destroy()
+						break
+					end
+				end
+			end
+		end)
 	end
 
 	player.CharacterAdded:Connect(onCharacterAdded)
@@ -91,77 +135,81 @@ local function createBallForPlayer(player)
 	end
 
 	player.CharacterRemoving:Connect(function()
-		if Balls[player] then
-			Balls[player]:Destroy()
-			Balls[player] = nil
+		print(Balls)
+		for _, Ball in ipairs(Balls) do
+			if Ball.Name == player.Name then
+				table.remove(table.find(Balls, Ball))
+				Ball:Destroy()
+				break
+			end
 		end
 	end)
 end
 
 local function GetNearestTarget()
-	local closestBall
-	local shortestDistance = math.huge
+	local Closest
+	local ShortestDistance = math.huge
 
-	for player, ball in pairs(Balls) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local pos = Camera:WorldToViewportPoint(ball.Position)
-			local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)).Magnitude
-			if distance < shortestDistance then
-				closestBall = ball
-				shortestDistance = distance
+	for _, Ball in ipairs(Balls) do
+		Ball.Highlight.FillColor = Color3.fromRGB(170, 170, 255)
+		if Ball.Name ~= Players.LocalPlayer.Name then
+			local Position = Camera:WorldToViewportPoint(Ball.Position)
+			local Distance = (Vector2.new(Position.X, Position.Y) - Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)).magnitude
+			if Distance < ShortestDistance then
+				Closest = Ball
+				ShortestDistance = Distance
 			end
 		end
 	end
 
-	return closestBall
+	return Closest
 end
 
 for _, player in pairs(Players:GetPlayers()) do
-	createBallForPlayer(player)
+	CreateBall(player)
 end
 
-Players.PlayerAdded:Connect(createBallForPlayer)
+Players.PlayerAdded:Connect(CreateBall)
 
 Players.PlayerRemoving:Connect(function(player)
-	if Balls[player] then
-		Balls[player]:Destroy()
-		Balls[player] = nil
+	if Deleted then return end
+	for _, Ball in ipairs(Balls) do
+		if Ball.Name == player.Name then
+			table.remove(Balls, table.find(Balls, Ball))
+			Ball:Destroy()
+			break
+		end
 	end
 end)
 
 local function deleteAllBalls()
-	for player, ball in pairs(Balls) do
-		if ball then
-			ball:Destroy()
-			Balls[player] = nil
+	for _, Ball in ipairs(Balls) do
+		if Ball then
+			Ball:Destroy()
 		end
+		table.remove(Balls, table.find(Balls, Ball))
 	end
 end
 
 UserInputService.InputBegan:Connect(function(Input, Typing)
-	if not Typing then
+	if not Typing and not Deleted then
 		if Input.KeyCode == AimlockKey then
 			Aimlock = not Aimlock
 			if Aimlock then
 				local nearestBall = GetNearestTarget()
 				if nearestBall then
+					nearestBall.Highlight.FillColor = Color3.fromRGB(255, 50, 50)
 					CurrentBall = nearestBall
 				else
 					Aimlock = false
 				end
+			else
+				GetNearestTarget()
 			end
 		elseif Input.KeyCode == Enum.KeyCode.P then
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "Delete Camlock?",
-				Text = "Do you want to delete all balls?",
-				Button1 = "Delete",
-				Button2 = "Cancel",
-				Callback = function(buttonPressed)
-					if buttonPressed == "Delete" then
-						deleteAllBalls()
-					end
-				end
-			})
+			Deleted = true
+			deleteAllBalls()
+			RunService:UnbindFromRenderStep("UpdateBallPosition")
 		end
 	end
 end)
