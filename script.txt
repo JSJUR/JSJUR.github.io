@@ -1,3 +1,23 @@
+
+
+local AimlockKey = Enum.KeyCode.Q
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -6,7 +26,6 @@ local Camera = workspace.CurrentCamera
 
 local LocalPlayer = Players.LocalPlayer
 local Aimlock = false
-local AimlockKey = Enum.KeyCode.Q
 local Balls = {}
 
 local function createBallForPlayer(player)
@@ -59,7 +78,7 @@ local function createBallForPlayer(player)
 			end
 
 			if NewPosition then
-				TweenService:Create(Ball, TweenInfo.new(0.05), {Position = NewPosition}):Play()
+				Ball.Position = NewPosition
 			end
 		end
 
@@ -110,16 +129,39 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
+local function deleteAllBalls()
+	for player, ball in pairs(Balls) do
+		if ball then
+			ball:Destroy()
+			Balls[player] = nil
+		end
+	end
+end
+
 UserInputService.InputBegan:Connect(function(Input, Typing)
-	if not Typing and Input.KeyCode == AimlockKey then
-		Aimlock = not Aimlock
-		if Aimlock then
-			local nearestBall = GetNearestTarget()
-			if nearestBall then
-				CurrentBall = nearestBall
-			else
-				Aimlock = false
+	if not Typing then
+		if Input.KeyCode == AimlockKey then
+			Aimlock = not Aimlock
+			if Aimlock then
+				local nearestBall = GetNearestTarget()
+				if nearestBall then
+					CurrentBall = nearestBall
+				else
+					Aimlock = false
+				end
 			end
+		elseif Input.KeyCode == Enum.KeyCode.P then
+			game.StarterGui:SetCore("SendNotification", {
+				Title = "Delete Camlock?",
+				Text = "Do you want to delete all balls?",
+				Button1 = "Delete",
+				Button2 = "Cancel",
+				Callback = function(buttonPressed)
+					if buttonPressed == "Delete" then
+						deleteAllBalls()
+					end
+				end
+			})
 		end
 	end
 end)
