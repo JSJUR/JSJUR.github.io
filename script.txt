@@ -101,7 +101,7 @@ local function CreateBall(player)
 			local NewPosition
 
 			if Jumping then
-				NewPosition = LockOnPart.Position + Vector3.new(0, 1.5, 0) + Velocity.Unit * JumpBallDistance
+				NewPosition = LockOnPart.Position + Velocity.Unit * DefaultBallDistance
 			elseif Velocity.Magnitude > 0 then
 				NewPosition = LockOnPart.Position + Velocity.Unit * SpeedMultiplier * DefaultBallDistance
 			else
@@ -109,6 +109,10 @@ local function CreateBall(player)
 			end
 
 			if NewPosition then
+				if NewPosition.Y < LockOnPart.Position.Y then
+					NewPosition = Vector3.new(NewPosition.X, LockOnPart.Position.Y, NewPosition.Z)
+				end
+
 				Ball.Position = NewPosition
 			end
 		end
@@ -120,7 +124,7 @@ local function CreateBall(player)
 				if RunServiceConnection then RunServiceConnection:Disconnect() end
 				for _, Ball in ipairs(Balls) do
 					if Ball.Name == player.Name then
-						table.remove(table.find(Balls, Ball))
+						table.remove(Balls, table.find(Balls, Ball))
 						Ball:Destroy()
 						break
 					end
@@ -138,7 +142,7 @@ local function CreateBall(player)
 		print(Balls)
 		for _, Ball in ipairs(Balls) do
 			if Ball.Name == player.Name then
-				table.remove(table.find(Balls, Ball))
+				table.remove(Balls, table.find(Balls, Ball))
 				Ball:Destroy()
 				break
 			end
